@@ -41,6 +41,7 @@ namespace Domain.Entities
 
         public void When(InviteWasAccepted @event)
         {
+            // Não permite que a pessoa aceite o convite mais de uma vez.
             if (PersonIsConfirmed(@event.PersonId))
             {
                 return;
