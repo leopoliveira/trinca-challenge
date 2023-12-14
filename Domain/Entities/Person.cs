@@ -40,10 +40,10 @@ namespace Domain.Entities
         public void When(InviteWasDeclined @event)
         {
             var invite = Invites.FirstOrDefault(x => x.Id == @event.InviteId);
-            
-            if (invite == null) 
+
+            if (invite == null)
                 return;
-            
+
             invite.Status = InviteStatus.Declined;
         }
 

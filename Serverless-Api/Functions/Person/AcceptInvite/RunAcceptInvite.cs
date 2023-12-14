@@ -22,7 +22,7 @@ namespace Serverless_Api
             var answer = await req.Body<InviteAnswer>();
 
             var person = await _repository.GetAsync(_user.Id);
-           
+
             person.Apply(new InviteWasAccepted { InviteId = inviteId, IsVeg = answer.IsVeg, PersonId = person.Id });
 
             await _repository.SaveAsync(person);
