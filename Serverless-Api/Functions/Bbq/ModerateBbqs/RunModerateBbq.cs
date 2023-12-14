@@ -31,12 +31,31 @@ namespace Serverless_Api
 
             var lookups = await _snapshots.AsQueryable<Lookups>("Lookups").SingleOrDefaultAsync();
 
-            foreach (var personId in lookups.PeopleIds)
+            if (moderationRequest.GonnaHappen)
             {
-                var person = await _persons.GetAsync(personId);
-                var @event = new PersonHasBeenInvitedToBbq(bbq.Id, bbq.Date, bbq.Reason);
-                person.Apply(@event);
-                await _persons.SaveAsync(person);
+                foreach (var personId in lookups.PeopleIds)
+                {
+                    var person = await _persons.GetAsync(personId);
+                    if (person?.IsCoOwner == false)
+                    {
+                        var @event = new PersonHasBeenInvitedToBbq(bbq.Id, bbq.Date, bbq.Reason);
+                        person.Apply(@event);
+                        await _persons.SaveAsync(person);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var personId in lookups.ModeratorIds)
+                {
+                    var person = await _persons.GetAsync(personId);
+                    var @event = new InviteWasDeclined
+                    {
+                        InviteId = bbq.Id
+                    };
+                    person.Apply(@event);
+                    await _persons.SaveAsync(person);
+                }
             }
 
             await _repository.SaveAsync(bbq);
