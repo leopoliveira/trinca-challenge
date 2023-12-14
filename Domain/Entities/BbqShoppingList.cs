@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Domain.Extensions;
+
 namespace Domain.Entities
 {
     public class BbqShoppingList
@@ -50,6 +52,16 @@ namespace Domain.Entities
         public BbqShoppingList GetShoppingList()
         {
             return this;
+        }
+
+        public object TakeSnapshot()
+        {
+            return new
+            {
+                Summary = $"Actual Churras Shopping List: Meat: {MeatQtyInGrams.ToKilogram()}Kg, Vegetables: {VegQtyInGrams.ToKilogram()}Kg.",
+                Meat = MeatQtyInGrams.ToKilogram(),
+                Veg = VegQtyInGrams.ToKilogram()
+            };
         }
     }
 }
