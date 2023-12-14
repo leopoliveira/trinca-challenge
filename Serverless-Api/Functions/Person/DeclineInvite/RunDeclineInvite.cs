@@ -14,11 +14,13 @@ namespace Serverless_Api
     {
         private readonly Person _user;
         private readonly IPersonRepository _repository;
+        private readonly IBbqRepository _bbqs;
 
-        public RunDeclineInvite(Person user, IPersonRepository repository)
+        public RunDeclineInvite(Person user, IPersonRepository repository, IBbqRepository bbqs)
         {
             _user = user;
             _repository = repository;
+            _bbqs = bbqs;
         }
 
         [Function(nameof(RunDeclineInvite))]
@@ -32,7 +34,12 @@ namespace Serverless_Api
             person.Apply(new InviteWasDeclined { InviteId = inviteId, PersonId = person.Id });
 
             await _repository.SaveAsync(person);
-            //Implementar impacto da recusa do convite no churrasco caso ele já tivesse sido aceito antes
+
+            var bbq = await _bbqs.GetAsync(inviteId);
+
+            bbq.Apply(new InviteWasDeclined { InviteId = inviteId, PersonId = person.Id });
+
+            await _bbqs.SaveAsync(bbq);
 
             return await req.CreateResponse(System.Net.HttpStatusCode.OK, person.TakeSnapshot());
         }

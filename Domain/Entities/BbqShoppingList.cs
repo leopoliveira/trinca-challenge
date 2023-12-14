@@ -1,4 +1,6 @@
-﻿namespace Domain.Entities
+﻿using System;
+
+namespace Domain.Entities
 {
     public class BbqShoppingList
     {
@@ -19,7 +21,7 @@
         public float MeatQtyInGrams { get; set; }
         public float VegQtyInGrams { get; set; }
 
-        public void UpdateShoppingList(bool isVeganPerson)
+        public void AddItemsToShoppingList(bool isVeganPerson)
         {
             if (isVeganPerson)
             {
@@ -29,6 +31,19 @@
             {
                 MeatQtyInGrams += MEAT_IN_GRAMS_PER_NON_VEGAN_PERSON;
                 VegQtyInGrams += VEG_IN_GRAMS_PER_NON_VEGAN_PERSON;
+            }
+        }
+
+        public void RemoveItemsFromShoppingList(bool isVeganPerson)
+        {
+            if (isVeganPerson)
+            {
+                VegQtyInGrams = Math.Max(0, VegQtyInGrams - VEG_IN_GRAMS_PER_VEGAN_PERSON);
+            }
+            else
+            {
+                MeatQtyInGrams  = Math.Max(0, MeatQtyInGrams - MEAT_IN_GRAMS_PER_NON_VEGAN_PERSON);
+                VegQtyInGrams = Math.Max(0, VegQtyInGrams - VEG_IN_GRAMS_PER_NON_VEGAN_PERSON);
             }
         }
 

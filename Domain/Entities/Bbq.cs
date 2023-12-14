@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Domain.Events;
 
@@ -14,7 +15,7 @@ namespace Domain.Entities
         public BbqStatus Status { get; set; }
         public DateTime Date { get; set; }
         public bool IsTrincasPaying { get; set; }
-        public List<string> ConfirmedPeople { get; set; }
+        public List<BbqConfirmedPeople> ConfirmedPeople { get; set; }
         public BbqShoppingList ShoppingList { get; set; }
 
         public void When(ThereIsSomeoneElseInTheMood @event)
@@ -23,7 +24,7 @@ namespace Domain.Entities
             Date = @event.Date;
             Reason = @event.Reason;
             Status = BbqStatus.New;
-            ConfirmedPeople = new List<string>();
+            ConfirmedPeople = new List<BbqConfirmedPeople>();
             ShoppingList = new BbqShoppingList();
         }
 
@@ -40,30 +41,30 @@ namespace Domain.Entities
 
         public void When(InviteWasAccepted @event)
         {
-            if (ConfirmedPeople.Contains(@event.PersonId))
+            if (PersonIsConfirmed(@event.PersonId))
             {
                 return;
             }
 
-            ConfirmedPeople.Add(@event.PersonId);
+            ConfirmedPeople.Add(new BbqConfirmedPeople { PersonId = @event.PersonId, IsVeg = @event.IsVeg });
 
-            _numberOfConfirmedPeople = ConfirmedPeople.Count;
+            UpdateNumberOfConfirmedPeopleAndBbqStatus();
 
-            if (_numberOfConfirmedPeople >= MINIMUM_NUMBER_OF_PEOPLE_TO_HAPPEN)
-            {
-                Status = BbqStatus.Confirmed;
-            }
-
-            ShoppingList.UpdateShoppingList(@event.IsVeg);
+            ShoppingList.AddItemsToShoppingList(@event.IsVeg);
         }
 
         public void When(InviteWasDeclined @event)
         {
-            //TODO:Deve ser possível rejeitar um convite já aceito antes.
-            //Se este for o caso, a quantidade de comida calculada pelo aceite anterior do convite
-            //deve ser retirado da lista de compras do churrasco.
-            //Se ao rejeitar, o número de pessoas confirmadas no churrasco for menor que sete,
-            //o churrasco deverá ter seu status atualizado para “Pendente de confirmações”.
+            if (PersonIsConfirmed(@event.PersonId))
+            {
+                var confirmedPerson = GetConfirmedPersonById(@event.PersonId);
+
+                ConfirmedPeople.Remove(confirmedPerson);
+
+                UpdateNumberOfConfirmedPeopleAndBbqStatus();
+
+                ShoppingList.RemoveItemsFromShoppingList(confirmedPerson.IsVeg);
+            }
         }
 
         public object TakeSnapshot()
@@ -76,5 +77,26 @@ namespace Domain.Entities
                 Status = Status.ToString()
             };
         }
+
+        private bool PersonIsConfirmed(string personId)
+        {
+            return ConfirmedPeople.Any(people => people.PersonId == personId);
+        }
+
+        private void UpdateNumberOfConfirmedPeopleAndBbqStatus()
+        {
+            _numberOfConfirmedPeople = ConfirmedPeople.Count;
+
+            Status = _numberOfConfirmedPeople >= MINIMUM_NUMBER_OF_PEOPLE_TO_HAPPEN ?
+                     BbqStatus.Confirmed :
+                     BbqStatus.PendingConfirmations;
+        }
+
+        private BbqConfirmedPeople GetConfirmedPersonById(string personId)
+        {
+            return ConfirmedPeople.SingleOrDefault(people => people.PersonId == personId);
+        }
+
     }
+
 }
