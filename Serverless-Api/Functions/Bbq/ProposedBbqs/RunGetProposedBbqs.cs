@@ -23,10 +23,15 @@ namespace Serverless_Api
         {
             var snapshots = new List<object>();
             var moderator = await _repository.GetAsync(_user.Id);
+
             foreach (var bbqId in moderator.Invites.Where(i => i.Date > DateTime.Now).Select(o => o.Id).ToList())
             {
                 var bbq = await _bbqs.GetAsync(bbqId);
-                snapshots.Add(bbq.TakeSnapshot());
+
+                if (bbq.Status != BbqStatus.ItsNotGonnaHappen)
+                {
+                    snapshots.Add(bbq.TakeSnapshot());
+                }
             }
 
             return await req.CreateResponse(HttpStatusCode.Created, snapshots);
