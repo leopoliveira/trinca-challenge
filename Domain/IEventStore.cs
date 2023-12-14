@@ -2,7 +2,7 @@
 
 namespace System
 {
-    internal interface IEventStore<T> : IEventStore
+    public interface IEventStore<T> : IEventStore
     {
 
     }

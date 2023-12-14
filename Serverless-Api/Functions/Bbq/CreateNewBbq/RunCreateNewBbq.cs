@@ -5,7 +5,6 @@ using Domain.Events;
 using Domain.Entities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Domain.Repositories;
 
 namespace Serverless_Api
 {
@@ -13,14 +12,14 @@ namespace Serverless_Api
     {
         private readonly Person _user;
         private readonly SnapshotStore _snapshots;
-        private readonly IBbqRepository _repository;
-        private readonly IPersonRepository _persons;
-        public RunCreateNewBbq(IBbqRepository repository, IPersonRepository persons, SnapshotStore snapshots, Person user)
+        private readonly IEventStore<Bbq> _bbqsStore;
+        private readonly IEventStore<Person> _peopleStore;
+        public RunCreateNewBbq(IEventStore<Bbq> eventStore, IEventStore<Person> peopleStore, SnapshotStore snapshots, Person user)
         {
             _user = user;
             _snapshots = snapshots;
-            _repository = repository;
-            _persons = persons;
+            _bbqsStore = eventStore;
+            _peopleStore = peopleStore;
         }
 
         [Function(nameof(RunCreateNewBbq))]
@@ -34,10 +33,9 @@ namespace Serverless_Api
             }
 
             var churras = new Bbq();
-
             churras.Apply(new ThereIsSomeoneElseInTheMood(Guid.NewGuid(), input.Date, input.Reason, input.IsTrincasPaying));
 
-            await _repository.SaveAsync(churras);
+            await _bbqsStore.WriteToStream(churras.Id, churras.Changes.Select(evento => new EventData(churras.Id, evento, new { CreatedBy = _user.Id }, churras.Version, DateTime.Now.ToString())).ToArray(), expectedVersion: churras.Version == 0 ? null : churras.Version);
 
             var churrasSnapshot = churras.TakeSnapshot();
 
@@ -45,13 +43,9 @@ namespace Serverless_Api
 
             foreach (var personId in Lookups.ModeratorIds)
             {
-                var person = await _persons.GetAsync(personId);
-                if (person != null)
-                {
-                    var @event = new PersonHasBeenInvitedToBbq(churras.Id, churras.Date, churras.Reason);
-                    person.Apply(@event);
-                    await _persons.SaveAsync(person);
-                }
+                var header = await _peopleStore.ReadHeader(personId);
+                var @event = new PersonHasBeenInvitedToBbq(churras.Id, churras.Date, churras.Reason);
+                await _peopleStore.WriteToStream(personId, new[] { new EventData(personId, @event, new { CreatedBy = _user.Id }, header.StreamHeader.Version, DateTime.Now.ToString()) }, expectedVersion: header.StreamHeader.Version == 0 ? null : header.StreamHeader.Version);
             }
 
             return await req.CreateResponse(HttpStatusCode.Created, churrasSnapshot);
