@@ -10,10 +10,12 @@ namespace Serverless_Api
     {
         private readonly Person _user;
         private readonly IPersonRepository _repository;
-        public RunAcceptInvite(IPersonRepository repository, Person user)
+        private readonly IBbqRepository _bbqs;
+        public RunAcceptInvite(IPersonRepository repository, IBbqRepository bbqs, Person user)
         {
             _user = user;
            _repository = repository;
+           _bbqs = bbqs;
         }
 
         [Function(nameof(RunAcceptInvite))]
@@ -27,8 +29,11 @@ namespace Serverless_Api
 
             await _repository.SaveAsync(person);
 
-            //implementar efeito do aceite do convite no churrasco
-            //quando tiver 7 pessoas ele está confirmado
+            var bbq = await _bbqs.GetAsync(inviteId);
+
+            bbq.Apply(new InviteWasAccepted { InviteId = inviteId, IsVeg = answer.IsVeg, PersonId = person.Id });
+
+            await _bbqs.SaveAsync(bbq);
 
             return await req.CreateResponse(System.Net.HttpStatusCode.OK, person.TakeSnapshot());
         }

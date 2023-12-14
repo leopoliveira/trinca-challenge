@@ -1,31 +1,60 @@
 ﻿using System;
+using System.Collections.Generic;
+
 using Domain.Events;
 
 namespace Domain.Entities
 {
     public class Bbq : AggregateRoot
     {
+        private const int MINIMUM_NUMBER_OF_PEOPLE_TO_HAPPEN = 7;
+        private int _numberOfConfirmedPeople = 0;
+
         public string Reason { get; set; }
         public BbqStatus Status { get; set; }
         public DateTime Date { get; set; }
         public bool IsTrincasPaying { get; set; }
+        public List<string> ConfirmedPeople { get; set; }
+        public BbqShoppingList ShoppingList { get; set; }
+
         public void When(ThereIsSomeoneElseInTheMood @event)
         {
             Id = @event.Id.ToString();
             Date = @event.Date;
             Reason = @event.Reason;
             Status = BbqStatus.New;
+            ConfirmedPeople = new List<string>();
+            ShoppingList = new BbqShoppingList();
         }
 
         public void When(BbqStatusUpdated @event)
         {
             if (@event.GonnaHappen)
                 Status = BbqStatus.PendingConfirmations;
-            else 
+            else
                 Status = BbqStatus.ItsNotGonnaHappen;
 
             if (@event.TrincaWillPay)
                 IsTrincasPaying = true;
+        }
+
+        public void When(InviteWasAccepted @event)
+        {
+            if (ConfirmedPeople.Contains(@event.PersonId))
+            {
+                return;
+            }
+
+            ConfirmedPeople.Add(@event.PersonId);
+
+            _numberOfConfirmedPeople = ConfirmedPeople.Count;
+
+            if (_numberOfConfirmedPeople >= MINIMUM_NUMBER_OF_PEOPLE_TO_HAPPEN)
+            {
+                Status = BbqStatus.Confirmed;
+            }
+
+            ShoppingList.UpdateShoppingList(@event.IsVeg);
         }
 
         public void When(InviteWasDeclined @event)
@@ -34,7 +63,7 @@ namespace Domain.Entities
             //Se este for o caso, a quantidade de comida calculada pelo aceite anterior do convite
             //deve ser retirado da lista de compras do churrasco.
             //Se ao rejeitar, o número de pessoas confirmadas no churrasco for menor que sete,
-            //o churrasco deverá ter seu status atualizado para “Pendente de confirmações”. 
+            //o churrasco deverá ter seu status atualizado para “Pendente de confirmações”.
         }
 
         public object TakeSnapshot()
