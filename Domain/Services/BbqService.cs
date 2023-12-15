@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 
 using Domain.Application;
@@ -30,18 +31,18 @@ namespace Domain.Services
 
                 if (bbq == null)
                 {
-                    return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found.");
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found.", httpStatusCode: HttpStatusCode.NotFound);
                 }
 
                 bbq.Apply(new InviteWasAccepted { InviteId = inviteId, IsVeg = isVeg, PersonId = _user.Id });
 
                 await SaveAsync(bbq);
 
-                return new ServiceExecutionResponse(isSuccess: true);
+                return new ServiceExecutionResponse(isSuccess: true, httpStatusCode: HttpStatusCode.OK);
             }
             catch (Exception ex)
             {
-                return new ServiceExecutionResponse(error: ex.InnerException ?? ex);
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
             }
         }
 
@@ -53,18 +54,18 @@ namespace Domain.Services
 
                 if (bbq == null)
                 {
-                    return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found.");
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found.", httpStatusCode: HttpStatusCode.NotFound);
                 }
 
                 bbq.Apply(new InviteWasDeclined { InviteId = inviteId, PersonId = _user.Id });
 
                 await SaveAsync(bbq);
 
-                return new ServiceExecutionResponse(isSuccess: true);
+                return new ServiceExecutionResponse(isSuccess: true, httpStatusCode: HttpStatusCode.OK);
             }
             catch (Exception ex)
             {
-                return new ServiceExecutionResponse(error: ex.InnerException ?? ex);
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
             }
         }
     }

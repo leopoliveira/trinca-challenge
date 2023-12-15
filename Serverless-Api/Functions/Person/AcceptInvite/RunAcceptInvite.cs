@@ -30,14 +30,14 @@ namespace Serverless_Api
 
             if (!serviceResponse.IsSuccess)
             {
-                return await req.CreateResponse(HttpStatusCode.InternalServerError, serviceResponse.Message);
+                return await req.CreateResponse(serviceResponse.HttpStatusCode, serviceResponse.Message);
             }
 
             var bbqServiceResponse = await _bbqService.AcceptInvite(inviteId, answer.IsVeg);
 
             if (!bbqServiceResponse.IsSuccess)
             {
-                return await req.CreateResponse(HttpStatusCode.InternalServerError, bbqServiceResponse.Message);
+                return await req.CreateResponse(bbqServiceResponse.HttpStatusCode, bbqServiceResponse.Message);
             }
 
             return await req.CreateResponse(HttpStatusCode.OK, serviceResponse.Data);

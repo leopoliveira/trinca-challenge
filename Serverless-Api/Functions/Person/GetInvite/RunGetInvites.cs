@@ -23,7 +23,7 @@ namespace Serverless_Api
 
             if (!serviceResponse.IsSuccess)
             {
-                return await req.CreateResponse(HttpStatusCode.InternalServerError, serviceResponse.Message);
+                return await req.CreateResponse(serviceResponse.HttpStatusCode, serviceResponse.Message);
             }
 
             return await req.CreateResponse(HttpStatusCode.OK, serviceResponse.Data);

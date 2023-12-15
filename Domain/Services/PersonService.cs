@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 using Domain.Application;
@@ -23,14 +24,21 @@ namespace Domain.Services
 
         public async Task<ServiceExecutionResponse> GetAllInvites()
         {
-            var person = await GetAsync(_user.Id);
-
-            if (person == null)
+            try
             {
-                return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.");
-            }
+                var person = await GetAsync(_user.Id);
 
-            return new ServiceExecutionResponse(isSuccess: true, data: person.TakeSnapshot());
+                if (person == null)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.", httpStatusCode: HttpStatusCode.NotFound);
+                }
+
+                return new ServiceExecutionResponse(isSuccess: true, data: person.TakeSnapshot(), httpStatusCode: HttpStatusCode.OK);
+            }
+            catch (Exception ex)
+            {
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
+            }
         }
 
         public async Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg)
@@ -41,23 +49,23 @@ namespace Domain.Services
 
                 if (person == null)
                 {
-                    return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.");
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.", httpStatusCode: HttpStatusCode.NotFound);
                 }
 
                 if (!person.Invites.Any(i => i.Id == inviteId))
                 {
-                    return new ServiceExecutionResponse(isSuccess: false, message: "Invite not found.");
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Invite not found.", httpStatusCode: HttpStatusCode.NotFound);
                 }
 
                 person.Apply(new InviteWasAccepted { InviteId = inviteId, IsVeg = isVeg, PersonId = person.Id });
 
                 await SaveAsync(person);
 
-                return new ServiceExecutionResponse(isSuccess: true, data: person.TakeSnapshot());
+                return new ServiceExecutionResponse(isSuccess: true, data: person.TakeSnapshot(), httpStatusCode: HttpStatusCode.OK);
             }
             catch (Exception ex)
             {
-                return new ServiceExecutionResponse(error: ex.InnerException ?? ex);
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
             }
         }
 
@@ -69,23 +77,23 @@ namespace Domain.Services
 
                 if (person == null)
                 {
-                    return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.");
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.", httpStatusCode: HttpStatusCode.NotFound);
                 }
 
                 if (!person.Invites.Any(i => i.Id == inviteId))
                 {
-                    return new ServiceExecutionResponse(isSuccess: false, message: "Invite not found.");
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Invite not found.", httpStatusCode: HttpStatusCode.NotFound);
                 }
 
                 person.Apply(new InviteWasDeclined { InviteId = inviteId, PersonId = person.Id });
 
                 await SaveAsync(person);
 
-                return new ServiceExecutionResponse(isSuccess: true, data: person.TakeSnapshot());
+                return new ServiceExecutionResponse(isSuccess: true, data: person.TakeSnapshot(), httpStatusCode: HttpStatusCode.OK);
             }
             catch (Exception ex)
             {
-                return new ServiceExecutionResponse(error: ex.InnerException ?? ex);
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
             }
         }
     }
