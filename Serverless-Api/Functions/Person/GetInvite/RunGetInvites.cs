@@ -1,6 +1,7 @@
-using Domain;
-using Domain.Entities;
-using Domain.Repositories;
+using System.Net;
+
+using Domain.Services;
+
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -8,24 +9,24 @@ namespace Serverless_Api
 {
     public partial class RunGetInvites
     {
-        private readonly Person _user;
-        private readonly IPersonRepository _repository;
+        private readonly IPersonService _service;
 
-        public RunGetInvites(Person user, IPersonRepository repository)
+        public RunGetInvites(IPersonService service)
         {
-            _user = user;
-            _repository = repository;
+            _service = service;
         }
 
         [Function(nameof(RunGetInvites))]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "person/invites")] HttpRequestData req)
         {
-            var person = await _repository.GetAsync(_user.Id);
+            var serviceResponse = await _service.GetAllInvites();
 
-            if (person == null)
-                return req.CreateResponse(System.Net.HttpStatusCode.NoContent);
+            if (!serviceResponse.IsSuccess)
+            {
+                return await req.CreateResponse(HttpStatusCode.InternalServerError, serviceResponse.Message);
+            }
 
-            return await req.CreateResponse(System.Net.HttpStatusCode.OK, person.TakeSnapshot());
+            return await req.CreateResponse(HttpStatusCode.OK, serviceResponse.Data);
         }
     }
 }

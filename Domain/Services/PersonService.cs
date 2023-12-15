@@ -21,6 +21,18 @@ namespace Domain.Services
             _user = user;
         }
 
+        public async Task<ServiceExecutionResponse> GetAllInvites()
+        {
+            var person = await GetAsync(_user.Id);
+
+            if (person == null)
+            {
+                return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.");
+            }
+
+            return new ServiceExecutionResponse(isSuccess: true, data: person.TakeSnapshot());
+        }
+
         public async Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg)
         {
             try
