@@ -3,19 +3,22 @@ using Domain.Entities;
 using Domain.Repositories;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Domain.Services;
+using System;
+using System.Net;
+using System.Collections.Generic;
 
 namespace Serverless_Api
 {
     public partial class RunAcceptInvite
     {
-        private readonly Person _user;
-        private readonly IPersonRepository _repository;
-        private readonly IBbqRepository _bbqs;
-        public RunAcceptInvite(IPersonRepository repository, IBbqRepository bbqs, Person user)
+        private readonly IPersonService _service;
+        private readonly IBbqService _bbqService;
+
+        public RunAcceptInvite(IPersonService service, IBbqService bbqService)
         {
-            _user = user;
-           _repository = repository;
-           _bbqs = bbqs;
+            _service = service;
+            _bbqService = bbqService;
         }
 
         [Function(nameof(RunAcceptInvite))]
@@ -23,19 +26,26 @@ namespace Serverless_Api
         {
             var answer = await req.Body<InviteAnswer>();
 
-            var person = await _repository.GetAsync(_user.Id);
+            if (answer == null)
+            {
+                return await req.CreateResponse(HttpStatusCode.BadRequest, "'isVeg' property must be sent in the request body.");
+            }
 
-            person.Apply(new InviteWasAccepted { InviteId = inviteId, IsVeg = answer.IsVeg, PersonId = person.Id });
+           var serviceResponse = await _service.AcceptInvite(inviteId, answer.IsVeg);
 
-            await _repository.SaveAsync(person);
+            if (!serviceResponse.IsSuccess)
+            {
+                return await req.CreateResponse(HttpStatusCode.InternalServerError, serviceResponse.Message);
+            }
 
-            var bbq = await _bbqs.GetAsync(inviteId);
+            var bbqServiceResponse = await _bbqService.AcceptInvite(inviteId, answer.IsVeg);
 
-            bbq.Apply(new InviteWasAccepted { InviteId = inviteId, IsVeg = answer.IsVeg, PersonId = person.Id });
+            if (!bbqServiceResponse.IsSuccess)
+            {
+                return await req.CreateResponse(HttpStatusCode.InternalServerError, bbqServiceResponse.Message);
+            }
 
-            await _bbqs.SaveAsync(bbq);
-
-            return await req.CreateResponse(System.Net.HttpStatusCode.OK, person.TakeSnapshot());
+            return await req.CreateResponse(HttpStatusCode.OK, serviceResponse.Data);
         }
     }
 }
