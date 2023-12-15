@@ -9,6 +9,7 @@ using Domain.Repositories;
 using Microsoft.Azure.Cosmos;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using Domain.Services;
 
 namespace Domain
 {
@@ -18,7 +19,8 @@ namespace Domain
         public static IServiceCollection AddDomainDependencies(this IServiceCollection services)
             => services.AddSingleton(new Person { Id = "e5c7c990-7d75-4445-b5a2-700df354a6a0" })
                 .AddEventStoreDependencies()
-                .AddRepositoriesDependencies();
+                .AddRepositoriesDependencies()
+                .AddServiceDependencies();
 
         public static IServiceCollection AddEventStoreDependencies(this IServiceCollection services)
         {
@@ -63,6 +65,11 @@ namespace Domain
         public static IServiceCollection AddRepositoriesDependencies(this IServiceCollection services)
             => services.AddTransient<IBbqRepository, BbqRepository>()
             .AddTransient<IPersonRepository, PersonRepository>();
+
+        public static IServiceCollection AddServiceDependencies(this IServiceCollection services)
+            => services.AddTransient<IBbqService, BbqService>()
+            .AddTransient<IPersonService, PersonService>()
+            .AddTransient<ILookupService, LookupService>();
 
         private async static Task CreateIfNotExists(this CosmosClient client, string database, string collection)
         {
