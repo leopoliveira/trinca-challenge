@@ -12,7 +12,8 @@ namespace System
 
             if (body != null)
             {
-                await response.WriteAsJsonAsync(body);
+                // Se não passar o status code, ele assume sempre como 200 (OK)!
+                await response.WriteAsJsonAsync(body, statusCode);
             }
             return response;
         }
