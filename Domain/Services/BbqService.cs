@@ -44,5 +44,28 @@ namespace Domain.Services
                 return new ServiceExecutionResponse(error: ex.InnerException ?? ex);
             }
         }
+
+        public async Task<ServiceExecutionResponse> DeclineInvite(string inviteId)
+        {
+            try
+            {
+                var bbq = await GetAsync(inviteId);
+
+                if (bbq == null)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found.");
+                }
+
+                bbq.Apply(new InviteWasDeclined { InviteId = inviteId, PersonId = _user.Id });
+
+                await SaveAsync(bbq);
+
+                return new ServiceExecutionResponse(isSuccess: true);
+            }
+            catch (Exception ex)
+            {
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex);
+            }
+        }
     }
 }

@@ -1,47 +1,39 @@
-﻿using Domain;
-using Eveneum;
-using CrossCutting;
-using Domain.Events;
-using Domain.Entities;
-using Domain.Repositories;
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using static Domain.ServiceCollectionExtensions;
+using Domain.Services;
+using System.Net;
 
 namespace Serverless_Api
 {
     public partial class RunDeclineInvite
     {
-        private readonly Person _user;
-        private readonly IPersonRepository _repository;
-        private readonly IBbqRepository _bbqs;
+        private readonly IPersonService _service;
+        private readonly IBbqService _bbqService;
 
-        public RunDeclineInvite(Person user, IPersonRepository repository, IBbqRepository bbqs)
+        public RunDeclineInvite(IPersonService service, IBbqService bbqService)
         {
-            _user = user;
-            _repository = repository;
-            _bbqs = bbqs;
+            _service = service;
+            _bbqService = bbqService;
         }
 
         [Function(nameof(RunDeclineInvite))]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "put", Route = "person/invites/{inviteId}/decline")] HttpRequestData req, string inviteId)
         {
-            var person = await _repository.GetAsync(_user.Id);
+            var serviceResponse = await _service.DeclineInvite(inviteId);
 
-            if (person == null)
-                return req.CreateResponse(System.Net.HttpStatusCode.NoContent);
+            if (!serviceResponse.IsSuccess)
+            {
+                return await req.CreateResponse(HttpStatusCode.InternalServerError, serviceResponse.Message);
+            }
 
-            person.Apply(new InviteWasDeclined { InviteId = inviteId, PersonId = person.Id });
+            var bbqServiceResponse = await _bbqService.DeclineInvite(inviteId);
 
-            await _repository.SaveAsync(person);
+            if (!bbqServiceResponse.IsSuccess)
+            {
+                return await req.CreateResponse(HttpStatusCode.InternalServerError, bbqServiceResponse.Message);
+            }
 
-            var bbq = await _bbqs.GetAsync(inviteId);
-
-            bbq.Apply(new InviteWasDeclined { InviteId = inviteId, PersonId = person.Id });
-
-            await _bbqs.SaveAsync(bbq);
-
-            return await req.CreateResponse(System.Net.HttpStatusCode.OK, person.TakeSnapshot());
+            return await req.CreateResponse(HttpStatusCode.OK, serviceResponse.Data);
         }
     }
 }

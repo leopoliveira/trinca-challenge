@@ -9,5 +9,6 @@ namespace Domain.Services
     public interface IBbqService : IBaseInterface<Bbq>
     {
         Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg);
+        Task<ServiceExecutionResponse> DeclineInvite(string inviteId);
     }
 }
