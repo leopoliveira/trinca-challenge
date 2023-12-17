@@ -23,6 +23,27 @@ namespace Domain.Services
             _user = user;
         }
 
+        public async Task<ServiceExecutionResponse> CreateBbq(DateTime date, string reason, bool isTrincaPaying, Guid? id = null)
+        {
+            try
+            {
+                Guid bbqId = id ?? Guid.NewGuid();
+
+                var bbq = new Bbq();
+
+                bbq.Apply(new ThereIsSomeoneElseInTheMood(bbqId, date, reason, isTrincaPaying));
+
+                await SaveAsync(bbq, new { CreatedBy = _user.Id });
+
+                return new ServiceExecutionResponse(isSuccess: true, data: bbq.TakeSnapshot(), httpStatusCode: HttpStatusCode.Created);
+            }
+            catch (Exception ex)
+            {
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
+            }
+        }
+
+
         public async Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg)
         {
             try
@@ -36,7 +57,7 @@ namespace Domain.Services
 
                 bbq.Apply(new InviteWasAccepted { InviteId = inviteId, IsVeg = isVeg, PersonId = _user.Id });
 
-                await SaveAsync(bbq);
+                await SaveAsync(bbq, null, inviteId);
 
                 return new ServiceExecutionResponse(isSuccess: true, httpStatusCode: HttpStatusCode.OK);
             }
@@ -59,7 +80,7 @@ namespace Domain.Services
 
                 bbq.Apply(new InviteWasDeclined { InviteId = inviteId, PersonId = _user.Id });
 
-                await SaveAsync(bbq);
+                await SaveAsync(bbq, null, inviteId);
 
                 return new ServiceExecutionResponse(isSuccess: true, httpStatusCode: HttpStatusCode.OK);
             }

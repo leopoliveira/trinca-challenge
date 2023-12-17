@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 using Domain.Application;
 using Domain.Entities;
@@ -9,6 +10,8 @@ namespace Domain.Services
     public interface IPersonService : IBaseInterface<Person>
     {
         Task<ServiceExecutionResponse> GetAllInvites();
+
+        Task<ServiceExecutionResponse> InviteModerators(string bbqId, DateTime bbqDate, string bbqReason);
 
         Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg);
         Task<ServiceExecutionResponse> DeclineInvite(string inviteId);
