@@ -229,6 +229,57 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Lista de compras do churras",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.globals.set(\"churras-id\", \"56a2a1f6-375d-4b54-a502-96f9f37db99b\")"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "personId",
+						"value": "{{moderador-2}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7296/api/churras/{{churras-id}}/shoppingList",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7296",
+					"path": [
+						"api",
+						"churras",
+						"{{churras-id}}",
+						"shoppingList"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
