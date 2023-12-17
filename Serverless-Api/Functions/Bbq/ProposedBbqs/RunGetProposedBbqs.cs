@@ -21,7 +21,7 @@ namespace Serverless_Api
         [Function(nameof(RunGetProposedBbqs))]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "churras")] HttpRequestData req)
         {
-            var serviceResponse = await _service.GetBbqsByPerson(await _personService.GetLoggedPersonAsync());
+            var serviceResponse = await _service.GetBbqsByLoggedPerson();
 
             if (!serviceResponse.IsSuccess)
             {

@@ -15,18 +15,22 @@ namespace Domain.Services
     internal class BbqService : BaseInterface<Bbq>, IBbqService
     {
         private readonly IBbqRepository _repository;
+        private readonly IPersonRepository _persons;
         private readonly ILookupService _lookupService;
         private readonly Person _user;
 
-        public BbqService(IBbqRepository repository, ILookupService lookupService, Person user) : base(repository)
+        public BbqService(IBbqRepository repository, IPersonRepository persons, ILookupService lookupService, Person user) : base(repository)
         {
             _repository = repository;
+            _persons = persons;
             _lookupService = lookupService;
             _user = user;
         }
 
-        public async Task<ServiceExecutionResponse> GetBbqsByPerson(Person person)
+        public async Task<ServiceExecutionResponse> GetBbqsByLoggedPerson()
         {
+            var person = await _persons.GetAsync(_user.Id);
+
             if (person == null)
             {
                 return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.", httpStatusCode: HttpStatusCode.NotFound);
@@ -55,6 +59,37 @@ namespace Domain.Services
             }
 
             return new ServiceExecutionResponse(isSuccess: true, data: invites, httpStatusCode: HttpStatusCode.OK);
+        }
+
+        public async Task<ServiceExecutionResponse> GetBbqShoppingList(string bbqId)
+        {
+            try
+            {
+                var person = await _persons.GetAsync(_user.Id);
+
+                if (person == null)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.", httpStatusCode: HttpStatusCode.NotFound);
+                }
+
+                if (!person.IsCoOwner)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Allowed only for Co-Owners.", HttpStatusCode.Unauthorized);
+                }
+
+                var bbq = await _repository.GetAsync(bbqId);
+
+                if (bbq == null)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found with the given id.", HttpStatusCode.NoContent);
+                }
+
+                return new ServiceExecutionResponse(isSuccess: true, data: bbq.ShoppingList.TakeSnapshot(), HttpStatusCode.OK);
+            }
+            catch (Exception ex)
+            {
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
+            }
         }
 
         public async Task<ServiceExecutionResponse> CreateBbq(DateTime date, string reason, bool isTrincaPaying, Guid? id = null)
