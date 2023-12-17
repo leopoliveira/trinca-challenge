@@ -9,6 +9,7 @@ namespace Domain.Repositories
     internal abstract class StreamRepository<T> : IStreamRepository<T> where T : AggregateRoot, new()
     {
         protected IEventStore _eventStore;
+
         protected StreamRepository(IEventStore eventStore)
         {
             _eventStore = eventStore;
