@@ -1,6 +1,6 @@
 ﻿namespace Domain.Entities
 {
-    public class BbqConfirmedPeople
+    public class BbqConfirmedPerson
     {
         public string PersonId { get; set; }
         public bool IsVeg { get; set; }

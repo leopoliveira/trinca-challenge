@@ -15,7 +15,7 @@ namespace Domain.Entities
         public BbqStatus Status { get; set; }
         public DateTime Date { get; set; }
         public bool IsTrincasPaying { get; set; }
-        public List<BbqConfirmedPeople> ConfirmedPeople { get; set; }
+        public List<BbqConfirmedPerson> ConfirmedPeople { get; set; }
         public BbqShoppingList ShoppingList { get; set; }
 
         public void When(ThereIsSomeoneElseInTheMood @event)
@@ -24,7 +24,7 @@ namespace Domain.Entities
             Date = @event.Date;
             Reason = @event.Reason;
             Status = BbqStatus.New;
-            ConfirmedPeople = new List<BbqConfirmedPeople>();
+            ConfirmedPeople = new List<BbqConfirmedPerson>();
             ShoppingList = new BbqShoppingList();
         }
 
@@ -47,7 +47,7 @@ namespace Domain.Entities
                 return;
             }
 
-            ConfirmedPeople.Add(new BbqConfirmedPeople { PersonId = @event.PersonId, IsVeg = @event.IsVeg });
+            ConfirmedPeople.Add(new BbqConfirmedPerson { PersonId = @event.PersonId, IsVeg = @event.IsVeg });
 
             UpdateNumberOfConfirmedPeopleAndBbqStatus();
 
@@ -93,7 +93,7 @@ namespace Domain.Entities
                      BbqStatus.PendingConfirmations;
         }
 
-        private BbqConfirmedPeople GetConfirmedPersonById(string personId)
+        private BbqConfirmedPerson GetConfirmedPersonById(string personId)
         {
             return ConfirmedPeople.SingleOrDefault(people => people.PersonId == personId);
         }
