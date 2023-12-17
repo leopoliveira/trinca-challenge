@@ -1,9 +1,5 @@
 using System.Net;
 
-using CrossCutting;
-using Domain.Entities;
-using Domain.Events;
-using Domain.Repositories;
 using Domain.Services;
 
 using Microsoft.Azure.Functions.Worker;
