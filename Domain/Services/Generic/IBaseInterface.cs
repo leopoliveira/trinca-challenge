@@ -5,6 +5,6 @@ namespace Domain.Services.Generic
     public interface IBaseInterface<T> where T : AggregateRoot
     {
         Task<T> GetAsync(string id);
-        Task SaveAsync(T entity);
+        Task SaveAsync(T entity, object? metadata = null, string? streamId = null);
     }
 }

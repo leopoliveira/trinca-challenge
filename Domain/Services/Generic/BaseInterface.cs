@@ -18,9 +18,9 @@ namespace Domain.Services.Generic
             return await _repository.GetAsync(id);
         }
 
-        public virtual async Task SaveAsync(T entity)
+        public virtual async Task SaveAsync(T entity, object? metadata = null, string? streamId = null)
         {
-            await _repository.SaveAsync(entity);
+            await _repository.SaveAsync(entity, metadata, streamId);
         }
     }
 }
