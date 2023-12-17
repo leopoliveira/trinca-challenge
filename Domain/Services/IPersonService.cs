@@ -13,7 +13,9 @@ namespace Domain.Services
 
         Task<ServiceExecutionResponse> InviteModerators(string bbqId, DateTime bbqDate, string bbqReason);
 
-        Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg);
-        Task<ServiceExecutionResponse> DeclineInvite(string inviteId);
+        Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg, string? personId = null);
+        Task<ServiceExecutionResponse> DeclineInvite(string inviteId, string? personId = null);
+
+        Task<ServiceExecutionResponse> UpdatePeopleInviteBasedOnBbqStatus(Bbq bbq);
     }
 }

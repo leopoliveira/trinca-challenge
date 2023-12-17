@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 using Domain.Application;
@@ -43,6 +45,42 @@ namespace Domain.Services
             }
         }
 
+        public async Task<ServiceExecutionResponse> UpdateBbqStatus(string churrasId, bool bbqGonnaHappen, bool trincaWillPay)
+        {
+            try
+            {
+                var moderatorsId = await _lookupService.GetModeratorsId();
+
+                if (moderatorsId == null)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "There are no Moderators in the System.", httpStatusCode: HttpStatusCode.NotFound);
+                }
+
+                if (!moderatorsId.Contains(_user.Id))
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Allowed only for moderators", httpStatusCode: HttpStatusCode.Unauthorized);
+                }
+
+                var bbq = await _repository.GetAsync(churrasId);
+
+                var bbqValidation = BbqUpdateValidation(bbq);
+
+                if (!bbqValidation.IsSuccess)
+                {
+                    return new ServiceExecutionResponse(isSuccess: bbqValidation.IsSuccess, message: bbqValidation.Message, httpStatusCode: bbqValidation.HttpStatusCode);
+                }
+
+                bbq.Apply(new BbqStatusUpdated(bbqGonnaHappen, trincaWillPay));
+
+                await _repository.SaveAsync(bbq);
+
+                return new ServiceExecutionResponse(isSuccess: true, data: bbq.TakeSnapshot() ,httpStatusCode: HttpStatusCode.OK);
+            }
+            catch (Exception ex)
+            {
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
+            }
+        }
 
         public async Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg)
         {
@@ -88,6 +126,36 @@ namespace Domain.Services
             {
                 return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
             }
+        }
+
+        private ServiceExecutionResponse BbqUpdateValidation(Bbq bbq)
+        {
+            if (bbq == null)
+            {
+                return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found.", httpStatusCode: HttpStatusCode.NotFound);
+            }
+
+            if (bbq.Date < DateTime.Now)
+            {
+                return new ServiceExecutionResponse(isSuccess: false, message: "Churras already happened.", httpStatusCode: HttpStatusCode.BadRequest);
+            }
+
+            if (bbq.Status == BbqStatus.ItsNotGonnaHappen)
+            {
+                return new ServiceExecutionResponse(isSuccess: false, message: "Churras already cancelled.", httpStatusCode: HttpStatusCode.BadRequest);
+            }
+
+            if (bbq.Status == BbqStatus.PendingConfirmations)
+            {
+                return new ServiceExecutionResponse(isSuccess: false, message: "Churras already confirmed.", httpStatusCode: HttpStatusCode.BadRequest);
+            }
+
+            if (bbq.Status == BbqStatus.Confirmed)
+            {
+                return new ServiceExecutionResponse(isSuccess: false, message: "Churras already confirmed.", httpStatusCode: HttpStatusCode.BadRequest);
+            }
+
+            return new ServiceExecutionResponse(isSuccess: true, httpStatusCode: HttpStatusCode.OK);
         }
     }
 }

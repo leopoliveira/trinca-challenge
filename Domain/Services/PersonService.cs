@@ -73,11 +73,11 @@ namespace Domain.Services
             }
         }
 
-        public async Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg)
+        public async Task<ServiceExecutionResponse> AcceptInvite(string inviteId, bool isVeg, string? personId = null)
         {
             try
             {
-                var person = await GetAsync(_user.Id);
+                var person = await GetAsync(personId ?? _user.Id);
 
                 if (person == null)
                 {
@@ -101,11 +101,11 @@ namespace Domain.Services
             }
         }
 
-        public async Task<ServiceExecutionResponse> DeclineInvite(string inviteId)
+        public async Task<ServiceExecutionResponse> DeclineInvite(string inviteId, string? personId = null)
         {
             try
             {
-                var person = await GetAsync(_user.Id);
+                var person = await GetAsync(personId ?? _user.Id);
 
                 if (person == null)
                 {
@@ -122,6 +122,71 @@ namespace Domain.Services
                 await SaveAsync(person, null, person.Id);
 
                 return new ServiceExecutionResponse(isSuccess: true, data: person.TakeSnapshot(), httpStatusCode: HttpStatusCode.OK);
+            }
+            catch (Exception ex)
+            {
+                return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
+            }
+        }
+
+        public async Task<ServiceExecutionResponse> UpdatePeopleInviteBasedOnBbqStatus(Bbq bbq)
+        {
+            try
+            {
+                var lookups = await _lookupService.GetLookups();
+
+                if (lookups == null)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "There are no person recorded in the system.", httpStatusCode: HttpStatusCode.NotFound);
+                }
+
+                if (bbq == null)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found.", httpStatusCode: HttpStatusCode.NotFound);
+                }
+
+                if (bbq.Status == BbqStatus.ItsNotGonnaHappen)
+                {
+                    foreach (var personId in lookups.ModeratorIds)
+                    {
+                        var declineInvite = await DeclineInvite(bbq.Id, personId);
+
+                        if (!declineInvite.IsSuccess)
+                        {
+                            return new ServiceExecutionResponse(isSuccess: declineInvite.IsSuccess, httpStatusCode: declineInvite.HttpStatusCode);
+                        }
+                    }
+
+                    return new ServiceExecutionResponse(isSuccess: true, httpStatusCode: HttpStatusCode.OK);
+                }
+
+                if (bbq.Status == BbqStatus.Confirmed || bbq.Status == BbqStatus.New)
+                {
+                    // Future implementation.
+
+                    return new ServiceExecutionResponse(isSuccess: true, httpStatusCode: HttpStatusCode.OK);
+                }
+
+                foreach (var personId in lookups.PeopleIds)
+                {
+                    if (lookups.ModeratorIds.Contains(personId))
+                    {
+                        continue;
+                    }
+
+                    var person = await GetAsync(personId);
+
+                    if (person == null)
+                    {
+                        continue;
+                    }
+
+                    person.Apply(new PersonHasBeenInvitedToBbq(bbq.Id, bbq.Date, bbq.Reason));
+
+                    await SaveAsync(person, null, personId);
+                }
+
+                return new ServiceExecutionResponse(isSuccess: true, httpStatusCode: HttpStatusCode.OK);
             }
             catch (Exception ex)
             {

@@ -1,7 +1,11 @@
+using System.Net;
+
 using CrossCutting;
 using Domain.Entities;
 using Domain.Events;
 using Domain.Repositories;
+using Domain.Services;
+
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -9,15 +13,13 @@ namespace Serverless_Api
 {
     public partial class RunModerateBbq
     {
-        private readonly SnapshotStore _snapshots;
-        private readonly IPersonRepository _persons;
-        private readonly IBbqRepository _repository;
+        private readonly IBbqService _service;
+        private readonly IPersonService _personService;
 
-        public RunModerateBbq(IBbqRepository repository, SnapshotStore snapshots, IPersonRepository persons)
+        public RunModerateBbq(IBbqService service, IPersonService personService)
         {
-            _persons = persons;
-            _snapshots = snapshots;
-            _repository = repository;
+            _service = service;
+            _personService = personService;
         }
 
         [Function(nameof(RunModerateBbq))]
@@ -25,42 +27,26 @@ namespace Serverless_Api
         {
             var moderationRequest = await req.Body<ModerateBbqRequest>();
 
-            var bbq = await _repository.GetAsync(id);
-
-            bbq.Apply(new BbqStatusUpdated(moderationRequest.GonnaHappen, moderationRequest.TrincaWillPay));
-
-            var lookups = await _snapshots.AsQueryable<Lookups>("Lookups").SingleOrDefaultAsync();
-
-            if (moderationRequest.GonnaHappen)
+            if (moderationRequest == null)
             {
-                foreach (var personId in lookups.PeopleIds)
-                {
-                    var person = await _persons.GetAsync(personId);
-                    if (person?.IsCoOwner == false)
-                    {
-                        var @event = new PersonHasBeenInvitedToBbq(bbq.Id, bbq.Date, bbq.Reason);
-                        person.Apply(@event);
-                        await _persons.SaveAsync(person);
-                    }
-                }
-            }
-            else
-            {
-                foreach (var personId in lookups.ModeratorIds)
-                {
-                    var person = await _persons.GetAsync(personId);
-                    var @event = new InviteWasDeclined
-                    {
-                        InviteId = bbq.Id
-                    };
-                    person.Apply(@event);
-                    await _persons.SaveAsync(person);
-                }
+                return await req.CreateResponse(HttpStatusCode.BadRequest, "Body is required.");
             }
 
-            await _repository.SaveAsync(bbq);
+            var serviceResponse = await _service.UpdateBbqStatus(id, moderationRequest.GonnaHappen, moderationRequest.TrincaWillPay);
 
-            return await req.CreateResponse(System.Net.HttpStatusCode.OK, bbq.TakeSnapshot());
+            if (!serviceResponse.IsSuccess)
+            {
+                return await req.CreateResponse(serviceResponse.HttpStatusCode, serviceResponse.Message);
+            }
+
+            var personServiceResponse = await _personService.UpdatePeopleInviteBasedOnBbqStatus(await _service.GetAsync(id));
+
+            if (!personServiceResponse.IsSuccess)
+            {
+                return await req.CreateResponse(personServiceResponse.HttpStatusCode, personServiceResponse.Message);
+            }
+
+            return await req.CreateResponse(HttpStatusCode.Created, serviceResponse.Data);
         }
     }
 }
