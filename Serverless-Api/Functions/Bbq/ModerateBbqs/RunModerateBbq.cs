@@ -42,7 +42,7 @@ namespace Serverless_Api
                 return await req.CreateResponse(personServiceResponse.HttpStatusCode, personServiceResponse.Message);
             }
 
-            return await req.CreateResponse(HttpStatusCode.Created, serviceResponse.Data);
+            return await req.CreateResponse(HttpStatusCode.OK, serviceResponse.Data);
         }
     }
 }
