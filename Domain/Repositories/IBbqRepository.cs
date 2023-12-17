@@ -2,7 +2,7 @@
 
 namespace Domain.Repositories
 {
-    public interface IBbqRepository : IStreamRepository<Bbq>
+    internal interface IBbqRepository : IStreamRepository<Bbq>
     {
 
     }

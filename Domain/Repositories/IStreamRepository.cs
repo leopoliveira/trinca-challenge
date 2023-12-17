@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Repositories
 {
-    public interface IStreamRepository<T> where T : AggregateRoot, new()
+    internal interface IStreamRepository<T> where T : AggregateRoot, new()
     {
         Task<StreamHeaderResponse> GetHeaderAsync(string streamId);
         Task<T?> GetAsync(string streamId);

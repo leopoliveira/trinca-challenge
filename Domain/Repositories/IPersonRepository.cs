@@ -2,7 +2,7 @@
 
 namespace Domain.Repositories
 {
-    public interface IPersonRepository : IStreamRepository<Person>
+    internal interface IPersonRepository : IStreamRepository<Person>
     {
 
     }

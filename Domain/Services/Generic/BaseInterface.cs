@@ -4,7 +4,7 @@ using Domain.Repositories;
 
 namespace Domain.Services.Generic
 {
-    public class BaseInterface<T> : IBaseInterface<T> where T : AggregateRoot, new()
+    internal class BaseInterface<T> : IBaseInterface<T> where T : AggregateRoot, new()
     {
         private readonly IStreamRepository<T> _repository;
 
