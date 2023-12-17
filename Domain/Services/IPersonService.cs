@@ -9,6 +9,8 @@ namespace Domain.Services
 {
     public interface IPersonService : IBaseInterface<Person>
     {
+        Task<Person> GetLoggedPersonAsync();
+
         Task<ServiceExecutionResponse> GetAllInvites();
 
         Task<ServiceExecutionResponse> InviteModerators(string bbqId, DateTime bbqDate, string bbqReason);

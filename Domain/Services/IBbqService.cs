@@ -9,6 +9,9 @@ namespace Domain.Services
 {
     public interface IBbqService : IBaseInterface<Bbq>
     {
+
+        Task<ServiceExecutionResponse> GetBbqsByPerson(Person person);
+
         Task<ServiceExecutionResponse> CreateBbq(DateTime date, string reason, bool isTrincaPaying, Guid? id = null);
 
         Task<ServiceExecutionResponse> UpdateBbqStatus(string churrasId, bool bbqGonnaHappen, bool trincaWillPay);

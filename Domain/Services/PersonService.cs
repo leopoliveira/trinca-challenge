@@ -25,6 +25,11 @@ namespace Domain.Services
             _lookupService = lookupService;
         }
 
+        public async Task<Person> GetLoggedPersonAsync()
+        {
+            return await GetAsync(_user.Id);
+        }
+
         public async Task<ServiceExecutionResponse> InviteModerators(string bbqId, DateTime bbqDate, string bbqReason)
         {
             try

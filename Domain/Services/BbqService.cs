@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -9,6 +10,8 @@ using Domain.Entities;
 using Domain.Events;
 using Domain.Repositories;
 using Domain.Services.Generic;
+
+using Eveneum;
 
 namespace Domain.Services
 {
@@ -23,6 +26,38 @@ namespace Domain.Services
             _repository = repository;
             _lookupService = lookupService;
             _user = user;
+        }
+
+        public async Task<ServiceExecutionResponse> GetBbqsByPerson(Person person)
+        {
+            if (person == null)
+            {
+                return new ServiceExecutionResponse(isSuccess: false, message: "Person not found.", httpStatusCode: HttpStatusCode.NotFound);
+            }
+
+            if (person.Invites?.Any() != true)
+            {
+                return new ServiceExecutionResponse(isSuccess: true, data: new object[] { },httpStatusCode: HttpStatusCode.OK);
+            }
+
+            var invites = new List<object>();
+
+            foreach (var bbqId in person.Invites.Where(x => x.Date > DateTime.Now).Select(i => i.Id).ToList())
+            {
+                var bbq = await GetAsync(bbqId);
+
+                if (bbq == null)
+                {
+                    continue;
+                }
+
+                if (bbq.Status != BbqStatus.ItsNotGonnaHappen)
+                {
+                    invites.Add(bbq.TakeSnapshot());
+                }
+            }
+
+            return new ServiceExecutionResponse(isSuccess: true, data: invites, httpStatusCode: HttpStatusCode.OK);
         }
 
         public async Task<ServiceExecutionResponse> CreateBbq(DateTime date, string reason, bool isTrincaPaying, Guid? id = null)
