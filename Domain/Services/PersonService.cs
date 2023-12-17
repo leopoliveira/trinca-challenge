@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Domain.Application;
 using Domain.Entities;
 using Domain.Events;
-using Domain.Extensions;
 using Domain.Repositories;
 using Domain.Services.Generic;
 
