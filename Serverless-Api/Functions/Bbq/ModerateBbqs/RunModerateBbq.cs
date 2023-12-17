@@ -35,7 +35,7 @@ namespace Serverless_Api
                 return await req.CreateResponse(serviceResponse.HttpStatusCode, serviceResponse.Message);
             }
 
-            var personServiceResponse = await _personService.UpdatePeopleInviteBasedOnBbqStatus(await _service.GetAsync(id));
+            var personServiceResponse = await _personService.UpdatePeopleInviteBasedOnBbqStatus(id);
 
             if (!personServiceResponse.IsSuccess)
             {

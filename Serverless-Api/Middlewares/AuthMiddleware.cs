@@ -18,14 +18,14 @@ namespace Serverless_Api.Middlewares
     {
         public async Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
         {
-            var loggedPerson = context.InstanceServices.GetService<Person>();
+            var loggedPerson = context.InstanceServices.GetService<LoggedUser>();
 
             context.BindingContext.BindingData.TryGetValue("headers", out object headers);
 
             if (headers == null)
             {
                 context.InvokeResult(context.GetHttpRequestData().CreateResponse(HttpStatusCode.Unauthorized));
-                return; 
+                return;
             }
 
             loggedPerson.Id = JsonConvert.DeserializeObject<Headers>(headers.ToString()).PersonId;

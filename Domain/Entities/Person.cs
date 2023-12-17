@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Domain.Entities
 {
-    public class Person : AggregateRoot
+    internal class Person : AggregateRoot
     {
         public string Name { get; set; }
         public bool IsCoOwner { get; set; }
@@ -14,13 +14,19 @@ namespace Domain.Entities
         {
             Invites = new List<Invite>();
         }
-        public void When(PersonHasBeenCreated @event)
+
+        protected override void When(IEvent @event)
+        {
+            this.When((dynamic)@event);
+        }
+        private void When(PersonHasBeenCreated @event)
         {
             Id = @event.Id;
             Name = @event.Name;
             IsCoOwner = @event.IsCoOwner;
         }
-        public void When(PersonHasBeenInvitedToBbq @event)
+
+        private void When(PersonHasBeenInvitedToBbq @event)
         {
             Invites = Invites.Append(new Invite
             {
@@ -31,13 +37,13 @@ namespace Domain.Entities
             });
         }
 
-        public void When(InviteWasAccepted @event)
+        private void When(InviteWasAccepted @event)
         {
             var invite = Invites.FirstOrDefault(x => x.Id == @event.InviteId);
             invite.Status = InviteStatus.Accepted;
         }
 
-        public void When(InviteWasDeclined @event)
+        private void When(InviteWasDeclined @event)
         {
             var invite = Invites.FirstOrDefault(x => x.Id == @event.InviteId);
 

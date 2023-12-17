@@ -1,13 +1,11 @@
 ﻿using Domain.Application;
 using System.Threading.Tasks;
 
-using Domain.Entities;
-using Domain.Services.Generic;
 using System;
 
 namespace Domain.Services
 {
-    public interface IBbqService : IBaseInterface<Bbq>
+    public interface IBbqService
     {
         Task<ServiceExecutionResponse> GetBbqsByLoggedPerson();
 

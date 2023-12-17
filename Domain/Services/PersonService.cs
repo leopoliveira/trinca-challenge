@@ -7,26 +7,22 @@ using Domain.Application;
 using Domain.Entities;
 using Domain.Events;
 using Domain.Repositories;
-using Domain.Services.Generic;
 
 namespace Domain.Services
 {
-    internal class PersonService : BaseInterface<Person>, IPersonService
+    internal class PersonService : IPersonService
     {
         private readonly IPersonRepository _repository;
+        private readonly IBbqRepository _bbqs;
         private readonly ILookupService _lookupService;
-        private readonly Person _user;
+        private readonly LoggedUser _user;
 
-        public PersonService(IPersonRepository repository, Person user, ILookupService lookupService) : base(repository)
+        public PersonService(IPersonRepository repository, IBbqRepository bbqs, ILookupService lookupService, LoggedUser user)
         {
             _repository = repository;
-            _user = user;
+            _bbqs = bbqs;
             _lookupService = lookupService;
-        }
-
-        public async Task<Person> GetLoggedPersonAsync()
-        {
-            return await GetAsync(_user.Id);
+            _user = user;
         }
 
         public async Task<ServiceExecutionResponse> InviteModerators(string bbqId, DateTime bbqDate, string bbqReason)
@@ -133,10 +129,17 @@ namespace Domain.Services
             }
         }
 
-        public async Task<ServiceExecutionResponse> UpdatePeopleInviteBasedOnBbqStatus(Bbq bbq)
+        public async Task<ServiceExecutionResponse> UpdatePeopleInviteBasedOnBbqStatus(string bbqId)
         {
             try
             {
+                var bbq = await _bbqs.GetAsync(bbqId);
+
+                if (bbq == null)
+                {
+                    return new ServiceExecutionResponse(isSuccess: false, message: "Churras not found with the given id.", HttpStatusCode.NoContent);
+                }
+
                 var lookups = await _lookupService.GetLookups();
 
                 if (lookups == null)
@@ -196,6 +199,16 @@ namespace Domain.Services
             {
                 return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
             }
+        }
+
+        private async Task<Person> GetAsync(string id)
+        {
+            return await _repository.GetAsync(id);
+        }
+
+        private async Task SaveAsync(Person person, object? metadata = null, string? streamId = null)
+        {
+            await _repository.SaveAsync(person, metadata, streamId);
         }
     }
 }

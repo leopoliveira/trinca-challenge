@@ -6,7 +6,7 @@ using Domain.Events;
 
 namespace Domain.Entities
 {
-    public class Bbq : AggregateRoot
+    internal class Bbq : AggregateRoot
     {
         private const int MINIMUM_NUMBER_OF_PEOPLE_TO_HAPPEN = 7;
         private int _numberOfConfirmedPeople = 0;
@@ -18,7 +18,12 @@ namespace Domain.Entities
         public List<BbqConfirmedPerson> ConfirmedPeople { get; set; }
         public BbqShoppingList ShoppingList { get; set; }
 
-        public void When(ThereIsSomeoneElseInTheMood @event)
+        protected override void When(IEvent @event)
+        {
+            this.When((dynamic)@event);
+        }
+
+        private void When(ThereIsSomeoneElseInTheMood @event)
         {
             Id = @event.Id.ToString();
             Date = @event.Date;
@@ -28,7 +33,7 @@ namespace Domain.Entities
             ShoppingList = new BbqShoppingList();
         }
 
-        public void When(BbqStatusUpdated @event)
+        private void When(BbqStatusUpdated @event)
         {
             if (@event.GonnaHappen)
                 Status = BbqStatus.PendingConfirmations;
@@ -39,7 +44,7 @@ namespace Domain.Entities
                 IsTrincasPaying = true;
         }
 
-        public void When(InviteWasAccepted @event)
+        private void When(InviteWasAccepted @event)
         {
             // Não permite que a pessoa aceite o convite mais de uma vez.
             if (PersonIsConfirmed(@event.PersonId))
@@ -54,7 +59,7 @@ namespace Domain.Entities
             ShoppingList.AddItemsToShoppingList(@event.IsVeg);
         }
 
-        public void When(InviteWasDeclined @event)
+        private void When(InviteWasDeclined @event)
         {
             if (PersonIsConfirmed(@event.PersonId))
             {

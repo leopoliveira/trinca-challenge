@@ -5,7 +5,7 @@ using System.Runtime.ExceptionServices;
 
 namespace Domain
 {
-    public abstract class AggregateRoot
+    internal abstract class AggregateRoot
     {
         public string Id { get; set; }
         public ulong Version { get; private set; }
@@ -43,5 +43,7 @@ namespace Domain
                 ExceptionDispatchInfo.Capture(new RuntimeBinderException(string.Format("Must implement event handler", @event.GetType(), GetType()), ex)).Throw();
             }
         }
+
+        protected abstract void When(IEvent @event);
     }
 }

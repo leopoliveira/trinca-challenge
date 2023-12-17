@@ -8,18 +8,17 @@ using Domain.Application;
 using Domain.Entities;
 using Domain.Events;
 using Domain.Repositories;
-using Domain.Services.Generic;
 
 namespace Domain.Services
 {
-    internal class BbqService : BaseInterface<Bbq>, IBbqService
+    internal class BbqService : IBbqService
     {
         private readonly IBbqRepository _repository;
         private readonly IPersonRepository _persons;
         private readonly ILookupService _lookupService;
-        private readonly Person _user;
+        private readonly LoggedUser _user;
 
-        public BbqService(IBbqRepository repository, IPersonRepository persons, ILookupService lookupService, Person user) : base(repository)
+        public BbqService(IBbqRepository repository, IPersonRepository persons, ILookupService lookupService, LoggedUser user)
         {
             _repository = repository;
             _persons = persons;
@@ -193,6 +192,16 @@ namespace Domain.Services
             {
                 return new ServiceExecutionResponse(error: ex.InnerException ?? ex, httpStatusCode: HttpStatusCode.InternalServerError);
             }
+        }
+
+        private async Task<Bbq> GetAsync(string id)
+        {
+            return await _repository.GetAsync(id);
+        }
+
+        private async Task SaveAsync(Bbq bbq, object? metadata = null, string? streamId = null)
+        {
+            await _repository.SaveAsync(bbq, metadata, streamId);
         }
 
         private ServiceExecutionResponse BbqUpdateValidation(Bbq bbq)

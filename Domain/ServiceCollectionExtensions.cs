@@ -17,7 +17,7 @@ namespace Domain
     {
         private const string DATABASE = "Churras";
         public static IServiceCollection AddDomainDependencies(this IServiceCollection services)
-            => services.AddSingleton(new Person { Id = "e5c7c990-7d75-4445-b5a2-700df354a6a0" })
+            => services.AddSingleton(new LoggedUser { Id = "e5c7c990-7d75-4445-b5a2-700df354a6a0" })
                 .AddEventStoreDependencies()
                 .AddRepositoriesDependencies()
                 .AddServiceDependencies();
@@ -78,7 +78,7 @@ namespace Domain
         }
     }
 
-    public static class Data
+    internal static class Data
     {
         public static List<Person> People => new List<Person>
         {
