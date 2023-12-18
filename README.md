@@ -119,10 +119,13 @@ O projeto é feito utilizando os conceitos de API Serverless, voltado para [Azur
   - Projeto de aplicação para lidar apenas com o "meio de campo" entre o domínio e a camanda de apresentação;
   - Projeto para testes;
 - Criação de logs de erros e auditoria na aplicação (aceites, rejeições, alterações e etc.);
-- Utilizar algum software para lidar com a menssageria, como RabbitMQ ou Kafta;
+- Utilizar algum software para lidar com a menssageria, como RabbitMQ ou Kafka;
+- Utilizar o Azure Key Vault ou outro software semelhante para armazenar segredos e dados confidenciais;
 
 ##### Sugestões para aplicação
+- Incluir opção de informar a quantidade de pessoas em cada convite;
 - Incluir a opção de rateio aos interessados no churrasco para o caso da Trinca não arcar com as despesas;
+    - Nesse ponto, permitir que o sistema receba o upload dos comprovantes de transferência, pagamentos e etc.;
 - Notificações para as pessoas que estão confirmadas no churrasco;
 - Lembrete para os moderadores sobre a compra dos itens da lista de compras do churras;
 - Notificações diversas;
